@@ -1,5 +1,5 @@
 // When version is changed, a new service worker will be created
-const version = 2;
+const version = 1;
 // Names of cache
 let staticName = `staticCache-${version}`;
 
@@ -52,8 +52,6 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
-  // Service worker intercepted a fetch call
-
   // Check cache, fetch if missing, then add response to cache
   e.respondWith(
     // checks to see if fetch request is located in cache or not
