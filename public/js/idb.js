@@ -22,6 +22,47 @@ window.onload = () => {
     // DB has opened after upgradeNeeded
     db = e.target.result;
     console.log(`${db.name} successfully connected`, db);
+
+    // Check if online, if yes then send POST request with transactions to mongoDB
+    if (navigator.onLine) {
+      // Create transaction
+      const tx = makeTX("transactions", "readonly");
+      // Will run once transaction is complete
+      tx.oncomplete = (e) => {
+        console.log(`Added transaction`, e);
+      };
+
+      // Target the store
+      const store = tx.objectStore("transactions");
+
+      // POST REQUEST
+      const request = store.getAll();
+
+      // What will happen after the object has been added to the DB (yet before the the transaction is considered complete)
+      request.onsuccess = (e) => {
+        console.log(request.result);
+        console.log("Added data to database");
+        fetch("/api/transaction/bulk", {
+          method: "POST",
+          body: JSON.stringify(request.result),
+          headers: {
+            Accept: "application/json, text/plain, */*",
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => {
+            return response.json();
+          })
+          .catch((err) => {
+            console.log(`Fetch Error:`, err);
+          });
+      };
+
+      // What happens if there is an error
+      request.onerror = (err) => {
+        console.log("Error in request to add transaction");
+      };
+    }
   });
 
   // If versionNumber is changed
@@ -41,90 +82,100 @@ window.onload = () => {
   });
 };
 
+document.getElementById("add-btn").addEventListener("click", function (e) {
+  if (!navigator.onLine) {
+    console.log("Not online");
+  }
+});
+
 /**-------------------------------------------------------------------------
  *                                 ADD FUNDS
  *------------------------------------------------------------------------**/
 document.getElementById("add-btn").addEventListener("click", function (e) {
-  e.preventDefault();
+  if (!navigator.onLine) {
+    e.preventDefault();
 
-  // Variables
-  const name = document.getElementById("t-name").value;
-  const value = parseInt(document.getElementById("t-amount").value);
-  const date = Date.now();
+    // Variables
+    const name = document.getElementById("t-name").value;
+    const value = parseInt(document.getElementById("t-amount").value);
+    const date = Date.now();
 
-  // Document
-  const transaction = {
-    id: UUID(),
-    name,
-    value,
-    date,
-  };
+    // Document
+    const transaction = {
+      id: UUID(),
+      name,
+      value,
+      date,
+    };
 
-  // Create transaction
-  const tx = makeTX("transactions", "readwrite");
-  // Will run once transaction is complete
-  tx.oncomplete = (e) => {
-    console.log(`Added transaction`, e);
-  };
+    // Create transaction
+    const tx = makeTX("transactions", "readwrite");
+    // Will run once transaction is complete
+    tx.oncomplete = (e) => {
+      console.log(`Added transaction`, e);
+    };
 
-  // Target the store
-  let store = tx.objectStore("transactions");
+    // Target the store
+    const store = tx.objectStore("transactions");
 
-  // POST REQUEST
-  let request = store.add(transaction);
+    // POST REQUEST
+    const request = store.add(transaction);
 
-  // What will happen after the object has been added to the DB (yet before the the transaction is considered complete)
-  request.onsuccess = (e) => {
-    console.log("Successfully added transaction");
-  };
+    // What will happen after the object has been added to the DB (yet before the the transaction is considered complete)
+    request.onsuccess = (e) => {
+      console.log("Successfully added transaction");
+    };
 
-  // What happens if there is an error
-  request.onerror = (err) => {
-    console.log("Error in request to add transaction");
-  };
+    // What happens if there is an error
+    request.onerror = (err) => {
+      console.log("Error in request to add transaction");
+    };
+  }
 });
 
 /**-------------------------------------------------------------------------
  *                           SUBTRACT FUNDS
  *------------------------------------------------------------------------**/
 document.getElementById("sub-btn").addEventListener("click", function (e) {
-  e.preventDefault();
+  if (!navigator.onLine) {
+    e.preventDefault();
 
-  // Variables
-  const name = document.getElementById("t-name").value;
-  const value = parseInt(document.getElementById("t-amount").value) * -1;
-  const date = Date.now();
+    // Variables
+    const name = document.getElementById("t-name").value;
+    const value = parseInt(document.getElementById("t-amount").value) * -1;
+    const date = Date.now();
 
-  // Document
-  const transaction = {
-    id: UUID(),
-    name,
-    value,
-    date,
-  };
+    // Document
+    const transaction = {
+      id: UUID(),
+      name,
+      value,
+      date,
+    };
 
-  // Create transaction
-  const tx = makeTX("transactions", "readwrite");
-  // Will run once transaction is complete
-  tx.oncomplete = (e) => {
-    console.log(`Added transaction`, e);
-  };
+    // Create transaction
+    const tx = makeTX("transactions", "readwrite");
+    // Will run once transaction is complete
+    tx.oncomplete = (e) => {
+      console.log(`Added transaction`, e);
+    };
 
-  // Target the store
-  let store = tx.objectStore("transactions");
+    // Target the store
+    const store = tx.objectStore("transactions");
 
-  // POST REQUEST
-  let request = store.add(transaction);
+    // POST REQUEST
+    const request = store.add(transaction);
 
-  // What will happen after the object has been added to the DB (yet before the the transaction is considered complete)
-  request.onsuccess = (e) => {
-    console.log("Successfully added transaction");
-  };
+    // What will happen after the object has been added to the DB (yet before the the transaction is considered complete)
+    request.onsuccess = (e) => {
+      console.log("Successfully added transaction");
+    };
 
-  // What happens if there is an error
-  request.onerror = (err) => {
-    console.log("Error in request to add transaction");
-  };
+    // What happens if there is an error
+    request.onerror = (err) => {
+      console.log("Error in request to add transaction");
+    };
+  }
 });
 
 /**-------------------------------------------------------------------------
