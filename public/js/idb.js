@@ -8,7 +8,7 @@ let db = null;
  *------------------------------------------------------------------------**/
 
 // Create Database
-window.onload = () => {
+function createDB() {
   // Connect to DB, create if it doesn't exist
   dbOpenReq = indexedDB.open("budgetDB", version);
 
@@ -22,6 +22,12 @@ window.onload = () => {
     // DB has opened after upgradeNeeded
     db = e.target.result;
     console.log(`${db.name} successfully connected`, db);
+
+    // Check if online, if yes then send POST request with transactions to mongoDB
+    if (navigator.onLine) {
+      console.log("Client is online");
+      checkIDB();
+    }
   });
 
   // If versionNumber is changed
@@ -39,7 +45,7 @@ window.onload = () => {
       db.createObjectStore("transactions", { keyPath: "id" });
     }
   });
-};
+}
 
 /**-------------------------------------------------------------------------
  *                              HELPER FUNCTIONS
@@ -87,6 +93,7 @@ function clearData() {
 function checkIDB() {
   // Create transaction
   const tx = makeTX("transactions", "readwrite");
+  console.log(tx);
   // Will run once transaction is complete
   tx.oncomplete = (e) => {
     console.log(`Added transaction`, e);
@@ -97,6 +104,7 @@ function checkIDB() {
 
   // POST REQUEST
   const request = store.getAll();
+  console.log(request);
 
   // What will happen after the object has been added to the DB (yet before the the transaction is considered complete)
   request.onsuccess = (e) => {
@@ -129,7 +137,7 @@ function checkIDB() {
 
 function saveRecord(record) {
   const { name, value, date } = record;
-
+  console.log(`saveRecord:`, name, value, date);
   const transaction = {
     id: UUID(),
     name,
@@ -159,9 +167,14 @@ function saveRecord(record) {
   };
 }
 
-window.addEventListener("online", () => {
-  // Check if online, if yes then send POST request with transactions to mongoDB
-  if (navigator.onLine) {
-    checkIDB;
-  }
-});
+// Testing to see if window.onLoad is was causing the problem by making this a regular function
+createDB();
+
+//FIXME: Doesn't work, not even the console.log
+// window.addEventListener("online", () => {
+// Check if online, if yes then send POST request with transactions to mongoDB
+// if (navigator.onLine) {
+//   console.log("Client is online");
+//   checkIDB();
+// }
+// });

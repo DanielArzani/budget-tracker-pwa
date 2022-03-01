@@ -12,20 +12,22 @@ let assets = [
   "/js/app.js",
   "/js/index.js",
   "/js/idb.js",
-  "/icons/icon-72x72.png",
-  "/icons/icon-96x96.png",
-  "/icons/icon-128x128.png",
-  "/icons/icon-144x144.png",
-  "/icons/icon-152x152.png",
-  "/icons/icon-192x192.png",
-  "/icons/icon-384x384.png",
-  "/icons/icon-512x512.png",
+  //! Do I need these cached?
+  // "/icons/icon-72x72.png",
+  // "/icons/icon-96x96.png",
+  // "/icons/icon-128x128.png",
+  // "/icons/icon-144x144.png",
+  // "/icons/icon-152x152.png",
+  // "/icons/icon-192x192.png",
+  // "/icons/icon-384x384.png",
+  // "/icons/icon-512x512.png",
 ];
 
 self.addEventListener("install", (e) => {
   // Service worker is installed
   console.log(`SW Version ${version} installed`);
   // Build a cache and make browser wait until all assets have been cached
+  //TODO: Does this need an if statement (in the case where no updates to cache have been made) so this doesn't throw an error?
   e.waitUntil(
     // Create cache
     caches.open(staticName).then((cache) => {
