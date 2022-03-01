@@ -1,5 +1,5 @@
 // When version is changed, a new service worker will be created
-const version = 1;
+let version = 1;
 // Names of cache
 let staticName = `staticCache-${version}`;
 
@@ -12,6 +12,14 @@ let assets = [
   "/js/app.js",
   "/js/index.js",
   "/js/idb.js",
+  "/icons/icon-72x72.png",
+  "/icons/icon-96x96.png",
+  "/icons/icon-128x128.png",
+  "/icons/icon-144x144.png",
+  "/icons/icon-152x152.png",
+  "/icons/icon-192x192.png",
+  "/icons/icon-384x384.png",
+  "/icons/icon-512x512.png",
 ];
 
 self.addEventListener("install", (e) => {
@@ -31,6 +39,8 @@ self.addEventListener("install", (e) => {
       );
     })
   );
+  version = version + 1;
+  self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
@@ -48,13 +58,17 @@ self.addEventListener("activate", (e) => {
           .map((key) => caches.delete(key))
       );
     })
+    // .then(() => {
+    //   // Even with self.skipWaiting, we still have to reload the page, this should allow us to skip that part
+    //   clients.claim();
+    // })
   );
 });
 
 self.addEventListener("fetch", (e) => {
   // Check cache, fetch if missing, then add response to cache
   e.respondWith(
-    // checks to see if fetch request is located in cache or not
+    // checks to see if request object is located in cache or not
     caches.match(e.request).then((cacheRes) => {
       return (
         cacheRes ||

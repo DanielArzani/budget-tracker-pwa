@@ -2,11 +2,11 @@
 let dbOpenReq;
 let version = 1;
 let db = null;
-let objectStore = null;
 
 /**-------------------------------------------------------------------------
  *                       CREATE DATABASE & STORE
  *------------------------------------------------------------------------**/
+
 // Create Database
 window.onload = () => {
   // Connect to DB, create if it doesn't exist
@@ -22,47 +22,6 @@ window.onload = () => {
     // DB has opened after upgradeNeeded
     db = e.target.result;
     console.log(`${db.name} successfully connected`, db);
-
-    // Check if online, if yes then send POST request with transactions to mongoDB
-    if (navigator.onLine) {
-      // Create transaction
-      const tx = makeTX("transactions", "readonly");
-      // Will run once transaction is complete
-      tx.oncomplete = (e) => {
-        console.log(`Added transaction`, e);
-      };
-
-      // Target the store
-      const store = tx.objectStore("transactions");
-
-      // POST REQUEST
-      const request = store.getAll();
-
-      // What will happen after the object has been added to the DB (yet before the the transaction is considered complete)
-      request.onsuccess = (e) => {
-        console.log(request.result);
-        console.log("Added data to database");
-        fetch("/api/transaction/bulk", {
-          method: "POST",
-          body: JSON.stringify(request.result),
-          headers: {
-            Accept: "application/json, text/plain, */*",
-            "Content-Type": "application/json",
-          },
-        })
-          .then((response) => {
-            return response.json();
-          })
-          .catch((err) => {
-            console.log(`Fetch Error:`, err);
-          });
-      };
-
-      // What happens if there is an error
-      request.onerror = (err) => {
-        console.log("Error in request to add transaction");
-      };
-    }
   });
 
   // If versionNumber is changed
@@ -82,102 +41,6 @@ window.onload = () => {
   });
 };
 
-document.getElementById("add-btn").addEventListener("click", function (e) {
-  if (!navigator.onLine) {
-    console.log("Not online");
-  }
-});
-
-/**-------------------------------------------------------------------------
- *                                 ADD FUNDS
- *------------------------------------------------------------------------**/
-document.getElementById("add-btn").addEventListener("click", function (e) {
-  if (!navigator.onLine) {
-    e.preventDefault();
-
-    // Variables
-    const name = document.getElementById("t-name").value;
-    const value = parseInt(document.getElementById("t-amount").value);
-    const date = Date.now();
-
-    // Document
-    const transaction = {
-      id: UUID(),
-      name,
-      value,
-      date,
-    };
-
-    // Create transaction
-    const tx = makeTX("transactions", "readwrite");
-    // Will run once transaction is complete
-    tx.oncomplete = (e) => {
-      console.log(`Added transaction`, e);
-    };
-
-    // Target the store
-    const store = tx.objectStore("transactions");
-
-    // POST REQUEST
-    const request = store.add(transaction);
-
-    // What will happen after the object has been added to the DB (yet before the the transaction is considered complete)
-    request.onsuccess = (e) => {
-      console.log("Successfully added transaction");
-    };
-
-    // What happens if there is an error
-    request.onerror = (err) => {
-      console.log("Error in request to add transaction");
-    };
-  }
-});
-
-/**-------------------------------------------------------------------------
- *                           SUBTRACT FUNDS
- *------------------------------------------------------------------------**/
-document.getElementById("sub-btn").addEventListener("click", function (e) {
-  if (!navigator.onLine) {
-    e.preventDefault();
-
-    // Variables
-    const name = document.getElementById("t-name").value;
-    const value = parseInt(document.getElementById("t-amount").value) * -1;
-    const date = Date.now();
-
-    // Document
-    const transaction = {
-      id: UUID(),
-      name,
-      value,
-      date,
-    };
-
-    // Create transaction
-    const tx = makeTX("transactions", "readwrite");
-    // Will run once transaction is complete
-    tx.oncomplete = (e) => {
-      console.log(`Added transaction`, e);
-    };
-
-    // Target the store
-    const store = tx.objectStore("transactions");
-
-    // POST REQUEST
-    const request = store.add(transaction);
-
-    // What will happen after the object has been added to the DB (yet before the the transaction is considered complete)
-    request.onsuccess = (e) => {
-      console.log("Successfully added transaction");
-    };
-
-    // What happens if there is an error
-    request.onerror = (err) => {
-      console.log("Error in request to add transaction");
-    };
-  }
-});
-
 /**-------------------------------------------------------------------------
  *                              HELPER FUNCTIONS
  *------------------------------------------------------------------------**/
@@ -196,3 +59,109 @@ function makeTX(storeName, mode) {
   };
   return tx;
 }
+
+// Clears all data
+function clearData() {
+  // open a read/write db transaction, ready for clearing the data
+  const tx = db.transaction("transactions", "readwrite");
+
+  // report on the success of the transaction completing, when everything is done
+  tx.oncomplete = function (event) {};
+
+  tx.onerror = function (err) {
+    console.log(err);
+  };
+
+  // create an object store on the transaction
+  const store = tx.objectStore("transactions");
+
+  // Make a request to clear all the data out of the object store
+  const storeRequest = store.clear();
+
+  storeRequest.onsuccess = function (e) {
+    // report the success of our request
+    console.log("Clear data successful");
+  };
+}
+
+function checkIDB() {
+  // Create transaction
+  const tx = makeTX("transactions", "readwrite");
+  // Will run once transaction is complete
+  tx.oncomplete = (e) => {
+    console.log(`Added transaction`, e);
+  };
+
+  // Target the store
+  const store = tx.objectStore("transactions");
+
+  // POST REQUEST
+  const request = store.getAll();
+
+  // What will happen after the object has been added to the DB (yet before the the transaction is considered complete)
+  request.onsuccess = (e) => {
+    if (request.result.length > 0) {
+      console.log("Added data to database");
+      fetch("/api/transaction/bulk", {
+        method: "POST",
+        body: JSON.stringify(request.result),
+        headers: {
+          Accept: "application/json, text/plain, */*",
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => response.json())
+        .then(() => {
+          // Clear data in IDB
+          clearData();
+        })
+        .catch((err) => {
+          console.log(`Fetch Error:`, err);
+        });
+    }
+  };
+
+  // What happens if there is an error
+  request.onerror = (err) => {
+    console.log("Error in request to add transaction");
+  };
+}
+
+function saveRecord(record) {
+  const { name, value, date } = record;
+
+  const transaction = {
+    id: UUID(),
+    name,
+    value,
+    date,
+  };
+
+  // Create transaction
+  const tx = makeTX("transactions", "readwrite");
+  // Will run once transaction is complete
+  tx.oncomplete = (e) => {
+    console.log(`Records saved to IDB`);
+  };
+
+  // Target the store
+  const store = tx.objectStore("transactions");
+
+  // POST REQUEST
+  const request = store.add(transaction);
+
+  // What will happen after the object has been added to the DB (yet before the the transaction is considered complete)
+  request.onsuccess = (e) => {};
+
+  // What happens if there is an error
+  request.onerror = (err) => {
+    console.log("Error in request to add transaction");
+  };
+}
+
+window.addEventListener("online", () => {
+  // Check if online, if yes then send POST request with transactions to mongoDB
+  if (navigator.onLine) {
+    checkIDB;
+  }
+});
