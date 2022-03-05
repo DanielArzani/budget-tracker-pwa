@@ -53,23 +53,17 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
-  // Check cache, fetch if missing, then add response to cache
   e.respondWith(
-    // checks to see if request object is located in cache or not
-    caches.match(e.request).then((cacheRes) => {
-      return (
-        cacheRes ||
-        // if not located in cache make fetch
-        fetch(e.request).then((fetchResponse) => {
-          //save in cache
-          return caches.open(staticName).then((cache) => {
-            // clone is used so it can be sent back to the server and the cache
-            //FIXME: Post requests are not allowed
-            cache.put(e.request, fetchResponse.clone());
-            return fetchResponse;
-          });
-        })
-      );
+    caches.match(e.request).then(function (request) {
+      if (request) {
+        // if cache is available, respond with cache
+        console.log("responding with cache : " + e.request.url);
+        return request;
+      } else {
+        // if there are no cache, try fetching request
+        console.log("file is not cached, fetching : " + e.request.url);
+        return fetch(e.request);
+      }
     })
   );
 });
