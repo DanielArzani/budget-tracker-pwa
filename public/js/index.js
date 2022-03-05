@@ -6,7 +6,6 @@ fetch("/api/transaction")
     return response.json();
   })
   .then((data) => {
-    console.log(`Fetch1:`, data);
     // save db data on global variable
     transactions = data;
 
@@ -114,9 +113,7 @@ function sendTransaction(isAdding) {
   populateTable();
   populateTotal();
 
-  //TODO: Find out why this keeps giving me a network error and failing
   // also send to server
-  console.log(transaction);
   fetch("/api/transaction", {
     method: "POST",
     body: JSON.stringify(transaction),
@@ -139,7 +136,6 @@ function sendTransaction(isAdding) {
     })
     .catch((err) => {
       // fetch failed, so save in indexed db
-      // console.log(transaction);
       saveRecord(transaction);
 
       // clear form

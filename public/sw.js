@@ -12,22 +12,12 @@ let assets = [
   "/js/app.js",
   "/js/index.js",
   "/js/idb.js",
-  //! Do I need these cached?
-  // "/icons/icon-72x72.png",
-  // "/icons/icon-96x96.png",
-  // "/icons/icon-128x128.png",
-  // "/icons/icon-144x144.png",
-  // "/icons/icon-152x152.png",
-  // "/icons/icon-192x192.png",
-  // "/icons/icon-384x384.png",
-  // "/icons/icon-512x512.png",
 ];
 
 self.addEventListener("install", (e) => {
   // Service worker is installed
   console.log(`SW Version ${version} installed`);
   // Build a cache and make browser wait until all assets have been cached
-  //TODO: Does this need an if statement (in the case where no updates to cache have been made) so this doesn't throw an error?
   e.waitUntil(
     // Create cache
     caches.open(staticName).then((cache) => {
@@ -41,7 +31,6 @@ self.addEventListener("install", (e) => {
       );
     })
   );
-  version = version + 1;
   self.skipWaiting();
 });
 
@@ -60,10 +49,6 @@ self.addEventListener("activate", (e) => {
           .map((key) => caches.delete(key))
       );
     })
-    // .then(() => {
-    //   // Even with self.skipWaiting, we still have to reload the page, this should allow us to skip that part
-    //   clients.claim();
-    // })
   );
 });
 
@@ -79,6 +64,7 @@ self.addEventListener("fetch", (e) => {
           //save in cache
           return caches.open(staticName).then((cache) => {
             // clone is used so it can be sent back to the server and the cache
+            //FIXME: Post requests are not allowed
             cache.put(e.request, fetchResponse.clone());
             return fetchResponse;
           });
