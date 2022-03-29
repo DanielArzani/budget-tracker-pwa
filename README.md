@@ -8,6 +8,8 @@ This is a budget tracker application with offline access and functionality. A Us
 
 Link to [Heroku](https://damp-coast-73569.herokuapp.com/)
 
+![budget-tracker-screenshot](./screenshots/budget-tracker.png)
+
 ## Usage
 
 In order to use this, you will need Node.js and MongoDB installed
